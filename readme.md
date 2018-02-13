@@ -4,7 +4,7 @@ PoTO is a consensus protocol for ordering cryptocurrency transactions as an alte
 
 # Benefits
 
-* Much more secure for a given mining cost
+* Much more secure than pure PoW for a given mining cost
 * Everyone can participate in minting blocks with only the computer resources necessary to mint the chain
 * Could eliminate risks of miner centralization
 
@@ -24,19 +24,17 @@ I'm going to describe this protocol using Bitcoin terms, but the protocol can be
 
 ## Validating a Block
 
-The *minter progression* is determined pseudo-randomly using the *progression seed*. In this progression, X address points are released each second, giving a chance for an active minter to mint a block. That number X is the inverse of the PoTO *difficulty*, meaning that the difficulty is 1/X. The more address points released each second, the lower the difficulty.
+The *minter progression* is determined pseudo-randomly using the *progression seed*. In this progression, X satoshi indexes are released each second, giving a chance for an active minter who owns one of those satoshi to mint a block. That number X is the inverse of the PoTO *difficulty*, meaning that the difficulty is 1/X. The more satoshi indexes that are released each second, the lower the difficulty.
 
 Proof of Work blocks are mined alongside the minted PoTO blocks. The target block-time for PoW blocks should be the same as the target block time for PoTO blocks, but the size of PoW blocks should be smaller than the PoTO blocks.
 
 A node will accept a block as valid if:
 
-1. The block's timestamp is later than that node's current time
+1. The block's timestamp is earlier than that node's current time
 2. If the block is a PoW block, it must be smaller than Y% of the average size of the last 100 PoTO blocks, where Y must be at minimum the ratio of current accumulated PoW difficulty for the last 10 days divided by the total accumulated PoW difficulty
 3. One of the following:
-  3a. Its a PoTO block and the address range of the address that signed the block (to mint it) contains an address that has come up in the minter progression for that block before that block's timestamp
+  3a. Its a PoTO block and the address that signed the block (to mint it) owns a satoshi that has come up in the minter progression for that block before that block's timestamp
   3b. Its a PoW block and the block's hash is less than or equal to what the PoW difficulty requires
-  3c. Its a PoW block, more than the average time for a PoTO block to have happened has passed, and the block's hash is less than or equal to 1000 times what the usual PoW difficulty usually requires
-4. There is no conflicting chain that is decisively longer and doesn't contain that block
 
 ## Follow-the-Satoshi
 

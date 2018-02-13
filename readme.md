@@ -1,6 +1,6 @@
 # Proof of Time-Ownership
 
-PoTO is a consensus algorithm for ordering cryptocurrency transactions as an alternative to pure Proof of Work. PoTO is a hybrid of Proof of Work and Proof of Stake that sets up a time-based race for PoS blocks rather than using quorums or voting to mint blocks. As far as I'm aware, this is the only PoS proposal that doesn't use quorums of voters to mint blocks.
+PoTO is a consensus protocol for ordering cryptocurrency transactions as an alternative to pure Proof of Work. PoTO is a hybrid of Proof of Work and Proof of Stake that sets up a time-based race for PoS blocks rather than using quorums or voting to mint blocks. As far as I'm aware, this is the only PoS proposal that doesn't use quorums of voters to mint blocks.
 
 # Benefits
 
@@ -10,7 +10,7 @@ PoTO is a consensus algorithm for ordering cryptocurrency transactions as an alt
 
 # Algorithm
 
-I'm going to describe this algorithm using Bitcoin terms, but the algorithm can be applied to pretty much any cryptocurrency.
+I'm going to describe this protocol using Bitcoin terms, but the protocol can be applied to pretty much any cryptocurrency.
 
 ## Terms
 
@@ -68,13 +68,31 @@ Similarly, if the length equation only cared about `Dwork` (and got rid of the `
 
 This chain-length equation is an extension of both those extremes, creating a gradient from one exteme to the other. 
 
-## Confirmations
+## Confirmations and Transaction Finalization
 
-A transaction should only be considered confirmed when at least one PoW block has been added to the chain where the transaction in question is now in that chain. A transaction should not be considered confirmed only by a PoTO block, since PoTO blocks can mint on top of multiple conflicting chains. This shouldn't be a problem as long as people don't erroneously consider 1-PoTO-confirmation transactions as confirmed in any significant way.
+A transaction should only be considered confirmed on the blockchain when the transaction has been confirmed by both a PoW block *and* a PoTO block.
+
+A transaction shouldn't be considered confirmed only by PoTO blocks, since PoTO blocks can mint on top of multiple conflicting chains. This shouldn't be a problem as long as people don't erroneously consider 1-PoTO-confirmation transactions as confirmed in any significant way.
+
+Also, a transaction shouldn't be considered confirmed only by PoW blocks, since this could allow an attacker with a lot of hash power to double-spend. While this attack is a lot harder than double-spending on someone accepting only PoTO blocks as confirmation, it would could be much easier than double-spending in today's bitcoin, since part of the point of PoTO is lowering the cost of mining (which by its nature reduce the hashpower in the system). This is why both PoW and PoTO must be used to determine how finalized a transaction is.
 
 ## Proxy Minting
 
-An empty address A can be used for minting PoS blocks on behalf of another address B as long as address A holds a message signed by address B giving address A that right. The actual owner address B would be the one to receive any minted coins (not the minter address A). This would allow propsective minters to keep the keys securing their coins safely offline while still using their full balance to mint.
+An empty address A can be used for minting PoS blocks on behalf of another address B as long as address A holds a rights-message signed by address B giving address A that right. The actual owner address B would be the one to receive any minted coins (not the minter address A). This would allow propsective minters to keep the keys securing their coins safely offline while still using their full balance to mint.
+
+A proxy minting rights-message could also include a fee amount that can be given to any address. It could also include an expirey block, after which the rights are revoked. This would allow users to allow a 3rd party to use their coins to mint blocks, in order for that 3rd party to get part of the reward as a fee. This could also faciliatate pool minting. Giving someone else rights to mint blocks for you might defeat the purpose of a more decentralized consensus protocol, so perhaps a feature for giving a fee to another address shouldn't in fact be added.
+
+## Security, Cost of Mining, and Cost of Attack
+
+The premise of PoTO is that the security of proof-of-work can combine with the security of proof-of-stake. In order to perform a 51% attack, for example, an attacker must have over 50% of both the hashrate and the active coins. For bitcoin as of Feb 2018, the cost of achieving over 50% of the hashrate is about $3.7 billion (if using 1.6 million Antminer S9s) and the cost of purchasing 50% of active bitcoins, assuming 5% activity, is $7 billion. So at the same hashrate, the capital cost of 51% attacking bitcoin would triple if it used PoTO. Even if the Proof-of-Work blocks were reduced to 1/1000th the total reward (fees and coinbase), the cost of the attack would still be about double. Any increase in the proportion of active minters or total value of the currency would increase that capital cost.
+
+And yet, the cost of sustaining the network can be relatively far smaller than bitcoin costs at the moment. The current bitcoin hashrate would be able to recreate the current (Feb 2018) chain in about 180 days, exceeding the minimum PoW suggested above by 18 times. So let's say we set the max PoW blocksize to be 1/18th of the PoTO block size. In this case, the total mining cost would also be 1/18th of what it currently is for bitcoin, but the cost to attack would still be $200 million for the hashpower and $7 billion in order to obtain the coins necessary to dominate blockchain minting. The cost of creating a whole new fresh chain would be that $200 million for the hashpower + all the hashpower you'll have wasted since a completely fresh-chain is almost guaranteed to not be accepted by most people, which comes out to about $70 million (60 days of revenue for slightly more than half the hashpower) for a total cost of $270 million. For Bitcoin, the minimum cost of creating a fresh-chain longer than the current chain would take about 300 days and cost about $9 billion.
+
+So there is a tradeoff here, if we rely less on PoW security and more on PoTO security, mining can be much cheaper (1/18th the cost in this example case) and it becomes at the same time more expensive to perform a secret-chain 51% attack, but it becomes cheaper to build a fresh-chain. Keep in mind that a fresh chain attack is pretty much only possible against new entrants (that could be tricked into thinking the new chain is the real one) and compromised SPV clients who could use the new chain to show proof that a transaction exists when it doesn't exist in the old main chain.
+
+## Multiple PoW algorithms
+
+This is orthogonal to the general hybrid idea and centralization of the PoW mining wouldn't cause much of a problem, but in the case it becomes an issue for some reason, multiple PoW algorithms could be used side by side. This would allow more seamless switch over from one algorithm to another if one of the algorithms is determined to be unfit at any point. It would also likely decentralize mining since different hardware and setup would be needed for each algorithm.
 
 # Potential Issues
 

@@ -12,6 +12,10 @@ PoTO is a consensus protocol for ordering cryptocurrency transactions as an alte
 
 I'm going to describe this protocol using Bitcoin terms, but the protocol can be applied to pretty much any cryptocurrency.
 
+The high level overview of PoTO is that proof-of-work miners and proof-of-stake minters race side-by-side for each block. PoS minters can mint for almost 0 cost, allowing anybody in the network to participate in block creation, and PoW blocks are used to keep PoS minters in check by ensuring there is only one longest-chain (ie preventing the nothing-at-stake problem), and preventing PoS minters from stake-grinding (attempting to affect their probability of minting the next block).
+
+There are two types of blocks that can be created: mined PoW blocks and minted PoS blocks. Mining PoW blocks works exactly how mining works in Bitcoin. Just like mining is a race to find a block with a hash below a certain value, minting PoS blocks is also a race against both miners and other minters. More and more addresses are given the ability to mint a block each second until either one of them mints a block or a PoW miner mines a block. This race incentivizes both miners and minters to release their mined blocks as soon as they find them and release minted blocks as soon as they become valid (which prevents some problems with pure proof of stake protocols and other hybrid protocols).
+
 ## Terms
 
 **Minter** - An address that is used to mint a block (the equivalent of mining for PoS). 
@@ -48,7 +52,7 @@ Two cases:
 
 When comparing two chains to see which is longer, the following formula will be used:
 
-`Dwork*PDstake^(commonProportion)`
+`Dwork*(PDstake^commonProportion)`
 
 where
 

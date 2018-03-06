@@ -33,18 +33,19 @@ PoTO seeks to require a much smaller amount of hashpower for a given level of se
   * [Follow-the-Satoshi](#follow-the-satoshi)
   * [Determining the Minter Progression](#determining-the-minter-progression)
   * [Determining Chain-length](#determining-chain-length)
+  * [Minter Punishment](#minter-punishment)
   * [Confirmations and Transaction Finalization](#confirmations-and-transaction-finalization)
   * [Block Rewards](#block-rewards)
   * [Proxy Minting](#proxy-minting)
 - [Protocol Extensions](#protocol-extensions)
-  * [PoS-Absence Multiplier](#pos-absence-multiplier)
   * [Measuring Attack-cost and Fee-level Retargeting](#measuring-attack-cost-and-fee-level-retargeting)
   * [Multiple PoW algorithms](#multiple-pow-algorithms)
 - [Analysis](#analysis)
   * [Security, Cost of Mining, and Cost of Attack](#security-cost-of-mining-and-cost-of-attack)
-    + [Mitigating Long-range Revision Attacks](#mitigating-long-range-revision-attacks)
-    + [Maximizing Active Stake](#maximizing-active-stake)
-  * [Cost of Attack with the PoS-Absence Multiplier](#cost-of-attack-with-the-pos-absence-multiplier)
+    + [Derivation](#derivation)
+  * [Mitigating Long-range Revision Attacks](#mitigating-long-range-revision-attacks)
+  * [Maximizing Active Stake](#maximizing-active-stake)
+  * [Minter Punishment Collateral Damage](#minter-punishment-collateral-damage)
 - [Potential Issues](#potential-issues)
     + [DDOS risk](#ddos-risk)
     + [Nothing at Stake](#nothing-at-stake)
@@ -53,11 +54,14 @@ PoTO seeks to require a much smaller amount of hashpower for a given level of se
     + [Two-in-a-row minter problem](#two-in-a-row-minter-problem)
     + [Opportunistic mining halt](#opportunistic-mining-halt)
     + [Opportunistic chain switching](#opportunistic-chain-switching)
+    + [Prediction Attack](#prediction-attack)
+    + [Economic Attack](#economic-attack)
+    + [Hashpower Monopoly Attack](#hashpower-monopoly-attack)
+    + [Minter Bribery](#minter-bribery)
 - [Comparisons](#comparisons)
-  * [Comparison to pure Proof of Work](#comparison-to-pure-proof-of-work)
-      - [Short-Range 51% attacks](#short-range-51%25-attacks)
+  * [Comparison to Pure Proof of Work](#comparison-to-pure-proof-of-work)
+      - [Short-Range longest-chain Attacks](#short-range-longest-chain-attacks)
       - [Long-Range 51% Attacks](#long-range-51%25-attacks)
-      - [Fresh-chain and long-range attacks](#fresh-chain-and-long-range-attacks)
   * [Comparison to Ethereum's Casper Proof of Stake system](#comparison-to-ethereums-casper-proof-of-stake-system)
   * [Comparison to Proof of Activity](#comparison-to-proof-of-activity)
   * [Comparison to Decred's Consensus Protocol](#comparison-to-decreds-consensus-protocol)
@@ -230,7 +234,7 @@ Using these values for `a` and `b` under the condition of minimal cost of attack
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; `StakeCost^(N/(N+1))*N^(-N/(N+1))*HashCost^(1/(N+1)) + StakeCost^(N/(N+1))*N^(1/(N+1))*HashCost^(1/(N+1))`
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; `HashCost^(1/(N+1)) * StakeCost^(N/(N+1)) * (N^(-N/(N+1)) + N^(1/(N+1)))`
 
-### Mitigating Long-range Revision Attacks
+## Mitigating Long-range Revision Attacks
 
 Long-range attacks are where an attacker builds off the chain from a block height that was a long time in the past (some large percent of the blockchain ago, eg 50% of the blockchain ago, which would be a chain split off from a block mined more than 4 years ago). In pure proof-of-work, a long-range attack is always more expensive than a short-range attack, but in PoTO this isn’t the case. For example, a completely fresh-chain that is longer than the real/honest chain can be built without any existing coin ownership as long as the attacker has more hashpower than the network currently has. This might take an attacker months but could still actually be cheaper since no coins need to be obtained.
 
@@ -240,7 +244,7 @@ A second way to mitigate this type of attack is for nodes to reject revisions if
 
 A third way to mitigate this would be hardcoded checkpoints in node and wallet software. This would be some data asserting that a block at a certain height has a certain hash. Since users must already either validate or trust their software, having a checkpoint like this would be simply another thing that should be peer-reviewed. Including this hard-coded checkpoint would completely eliminate the possibility of a long-range attack that split from the true-chain before the checkpoint, even for new entrants and SPV clients using a compromised SPV server.
 
-### Maximizing Active Stake
+## Maximizing Active Stake
 
 Since the security of PoTO depends on how much of the owned coins are actively searching for a block to mint, maximizing this proportion is important. At a high proportion of active stake, getting to mint a block would be like winning a lottery: cheap to participate in but rarely rewarded. For example, if each of the world's ~7 billion people had equal stake, with a 2 minute target blocktime (4 minutes per PoS block) there would be about 130,000 blocks per year giving about 1/50,000 chance of winning the ability to mint a block each year if everyone participated.
 

@@ -214,24 +214,24 @@ Also, the cost of a successful attack is the cost of acquiring the hashpower for
     
 The Attack Inequality can be simplified to:  
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; `a*b^N > 1`  
-This means that the minimum attack cost is where `a*b^N = 1`. So in the case of a minimum-cost attack:
+This means that the minimum attack cost is where `a*b^N = 1`. So in the case of a minimum-cost attack:  
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; `a = b^-N`  
-From this we can simplify the `costOfAttack` to:
+From this we can simplify the `costOfAttack` to:  
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; `StakeCost*b + HashCost*b^-N`  
-Getting the derivative of this with respect to `b`:
+Getting the derivative of this with respect to `b`:  
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; `StakeCost - HashCost*N*b^(-N-1)`  
-The cost of attack will be minimized when the derivative is 0:
+The cost of attack will be minimized when the derivative is 0:  
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; `StakeCost - HashCost*N*b^(-N-1) = 0`  
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; `StakeCost = HashCost*N*b^(-N-1)`  
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; `StakeCost/(N*HashCost) = b^(-N-1)`  
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; `b = (StakeCost/(N*HashCost))^(1/(-N-1))`  
-We can then solve for `a`:
+We can then solve for `a`:  
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; `a = (StakeCost/(N*HashCost))^(-N/(-N-1))`  
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; `a = (StakeCost/(N*HashCost))^(N/(N+1))`  
-Using these values for `a` and `b` under the condition of minimal cost of attack, we can obtain the above minimal cost of attack:
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; `HashCost*(StakeCost/(N*HashCost))^(N/(N+1)) + StakeCost*(StakeCost/(N*HashCost))^(1/(-N-1))`
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; `HashCost*StakeCost^(N/(N+1))*N^(-N/(N+1))*HashCost^(-N/(N+1)) + StakeCost*StakeCost^(1/(-N-1))*N^(1/(N+1))*HashCost^(1/(N+1))`
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; `StakeCost^(N/(N+1))*N^(-N/(N+1))*HashCost^(1/(N+1)) + StakeCost^(N/(N+1))*N^(1/(N+1))*HashCost^(1/(N+1))`
+Using these values for `a` and `b` under the condition of minimal cost of attack, we can obtain the above minimal cost of attack:  
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; `HashCost*(StakeCost/(N*HashCost))^(N/(N+1)) + StakeCost*(StakeCost/(N*HashCost))^(1/(-N-1))`  
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; `HashCost*StakeCost^(N/(N+1))*N^(-N/(N+1))*HashCost^(-N/(N+1)) + StakeCost*StakeCost^(1/(-N-1))*N^(1/(N+1))*HashCost^(1/(N+1))`  
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; `StakeCost^(N/(N+1))*N^(-N/(N+1))*HashCost^(1/(N+1)) + StakeCost^(N/(N+1))*N^(1/(N+1))*HashCost^(1/(N+1))`  
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; `HashCost^(1/(N+1)) * StakeCost^(N/(N+1)) * (N^(-N/(N+1)) + N^(1/(N+1)))`
 
 ## Mitigating Long-range Revision Attacks

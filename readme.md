@@ -187,7 +187,7 @@ The premise of PoTO is that the security of proof-of-work can combine with the s
 
 The equation for finding the minimal cost of a successful longest-chain (*51%-style*) attack is:  
 
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;`HashCost^(1/(N+1)) * StakeCost^(N/(N+1)) * (N^(-N/(N+1)) + N^(1/(N+1)))`
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;![`HashCost^(1/(N+1)) * StakeCost^(N/(N+1)) * (N^(-N/(N+1)) + N^(1/(N+1)))`](minCostFormula.svg)
 
 where  
 * *HashCost* is the cost of acquiring an amount of hashpower equal to the honest hashpower in the system

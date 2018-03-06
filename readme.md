@@ -187,8 +187,7 @@ The premise of PoTO is that the security of proof-of-work can combine with the s
 
 The equation for finding the minimal cost of a successful longest-chain (*51%-style*) attack is:  
 
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;![`HashCost^(1/(N+1)) * StakeCost^(N/(N+1)) * (N^(-N/(N+1)) + N^(1/(N+1)))`](minCostFormula.svg)
-
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;![`HashCost^(1/(N+1)) * StakeCost^(N/(N+1)) * (N^(-N/(N+1)) + N^(1/(N+1)))`](minCostFormula.svg)  
 where  
 * *HashCost* is the cost of acquiring an amount of hashpower equal to the honest hashpower in the system
 * *StakeCost* is the cost of acquiring an amount of coin equal to the honest actively minting coins in the system
@@ -196,7 +195,7 @@ where
 For N=1, this is `2 * SQRT(StakeCost*HashCost)`.  
 For N=3, this is approximately `1.754765 * HashCost^(1/4) * StakeCost^(3/4)`. 
 
-![Minimum Attack Cost](MinAttackCost.png)
+![Minimum Attack Cost](MinAttackCost.png)  
 The above shows how much it costs to successfully execute a longest-chain attack in PoTO for a given cost of hashpower and active stake (hashpower, stake, and attack cost all as percentages of the total coins). Note that Bitcoin currently cost about 2.5% of all bitcoins to successfully longest-chain attack it. Even with 1/1000th of Bitcoin's hashpower, PoTO with N=4 would cost more to attack than Bitcoin as long as it has more than 8% of the coins actively minting. See [PoTO-v0.2-attack-cost.xlsx](PoTO-v0.2-attack-cost.xlsx) for details.
 
 ### Derivation

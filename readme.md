@@ -200,7 +200,7 @@ The above shows how much it costs to successfully execute a longest-chain attack
 
 ### Derivation
 
-The formula for calculating the minimum cost of attack is derived in the following way. In a successful attack, the attacker must be able to build a longer chain. We’ll assume this isn’t a long-range revision such that the `commonProportion` term is very close to 1 and can then simplify the chain-length equation by ignoring it.
+The formula for calculating the minimum cost of attack is derived in the following way. In a successful attack, the attacker must be able to build a longer chain. We’ll assume this isn’t a long-range revision, and therefore assume that the `commonProportion` term is very close to 1 and can then simplify the chain-length equation by ignoring it.
 
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Attack Inequality: `a*HashCost*(b*StakeCost)^N > HashCost*StakeCost^N`  
 where  

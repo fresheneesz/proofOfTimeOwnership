@@ -89,6 +89,8 @@ There are two types of blocks that can be created: mined PoW blocks and minted P
 
 **Miner signature** - A message and a signature of that message required for a mined block to be valid. The message contains the 18-byte ASCII "miningThisBlockNow" followed by the height of the hash of the last block and a hash of the block being minted.
 
+**Satoshi cooldown period** - The number of blocks a given satoshi must not have moved in order to be eligible to part of the minter progression.
+
 ## Validating a Block
 
 The *minter progression* is determined pseudo-randomly using the *address hash*. In this progression, X satoshi indexes are released each second, giving a chance for an active minter who owns one of those satoshi to mint a block. That number X is the inverse of the PoS difficulty, meaning that the difficulty is 1/X. The fewer satoshi indexes that are released each second, the higher the difficulty.
@@ -183,7 +185,9 @@ In order to reduce mining centralization, multiple PoW algorithms could be used 
 
 Since deciding which fork to follow can only be done by fully validating nodes, its critical that a majority of that currency's economic actors (when counted by transaction volume) actively decide which forks to allow either by fully validating the chain or by intentionally and actively choosing a delgate to validate for it (eg using an SPV server or, in the case of PoTO, by delegating a minter proxy). This goal can be furthered by requiring that minters have the full UTXO set in order to practically mint blocks. This is further discussed in the [PoA whitepaper under the section "Discouraging thin clients by Proof of UTXO"](https://www.decred.org/research/bentov2014.pdf) and in the [Permacoin whitepaper](http://soc1024.ece.illinois.edu/permacoin.pdf).
 
-http://soc1024.ece.illinois.edu/permacoin.pdf
+## PoA Extension
+
+PoTO's PoS blocks could be augmented by changing the minter progression from specifying individual satoshi to specifying specific sets of N satoshi that must all sign the block in order for it to be valid, similar to the set of N winners in Proof-of-Activity. This could raise PoTO's theoretical security to the level of PoA without introducing PoA's suceptibility to a hashpower monopoly attack.
 
 # Analysis
 
@@ -295,13 +299,23 @@ One way to minimize this effect is to make the blocktime for PoS blocks much lon
 
 ### Prediction Attack
 
-Because that a satoshi must have not moved in the last 30 blocks for it to be eligible for minting, as long as no one can predict all the minters for the next 30 blocks, no one can move their coins around to gain an advantage in minting. But if an actor could predict more than 30 blocks in advance, they could potentially be able to mint far more blocks than they would otherwise have been able to - potentially taking over the chain. To do this, an attacker would predict the *minter progression* for the block 31 blocks from now, then generate addresses until those addresses give them a high chance to mint that block.
+Because of the 30-block *satoshi cooldown period*, as long as no one can predict all the minters for the next 30 blocks, no one can move their coins around to gain an advantage in minting. But if an actor could predict blocks in advance further out than the *satoshi cooldown period*, they could potentially be able to mint far more blocks than they would otherwise have been able to - potentially taking over the chain. To do this, an attacker would predict the *minter progression* for the block 31 blocks from now, then generate addresses until those addresses give them a high chance to mint that block.
 
 Without also having control over more than 50% of the hashpower, this should be practically impossible, since the blockheights at PoW blocks will be mined change what the *Address Hash* will be in future blocks. An attacker would have to predict not only which blocks at which heights would be minted by which *exact* addresses, but would have to also know what block heights will be instead mined by PoW miners.
 
 Howerver, if the attacker has greater than 50% of the hashpower, they could influence which PoW blocks are mined, and which aren't. If their prediction predicted that a PoW block would not be mined at a particular height but one was found, if the expected minter created and propagated their block (perhaps ahead of time), the attacker can mine on top of that minted block instead. And similarly, if a PoS block was minted where the attacker predicted a PoW block, the attacker could mine a PoW block at that height so that minters will then mint on top of it. The first correction is much less likely to be successful than the second correction, but both are frustrated by honest miners and minters who will be following the longest chain. An attacking miner can also withhold their hashpower for blocks at heights they expect a minted PoS block. How successful this kind of manipulation would be would depend on the distribution of addresses that are actively minting as well as how much hashpower and stake the attacker has. 
 
-It seems unlikely that a prediction attack would be possible, even at 30 blocks. However, if it becomes clear this is a risk, the idle-period for satoshi eligible to mint can be increased to 300 or 3000 blocks without much reduction in coins eligible for minting. 
+If nearly 100% of the coins are used to actively mint, this attack can become much easier. If the attacker can accurately predict all the minter addresses that will be able to mint the next 30 blocks, all that's left to do is predict which blocks will be PoW blocks where the technique described in the previous paragraph could be useful.
+
+Also, in the case of a hidden-chain attack, since the attacker controls all the blocks in the chain, they could potentially move coins around such that they could then mint blocks at a highly accellerated rate in comparison to the honest chain, even without any significant fraction of the online stake, after the 30 block cooldown period has passed.
+
+Potential ways to mitigate this problem:
+
+* Increase the number of blocks a satoshi must have been unmoved for to be eligible for minting. The *satoshi cooldown period* could be increased to 300 or 3000 blocks without much reduction in coins eligible for minting.
+* Make the process of determining where in the minter progression an address falls be expensive
+* Have honest nodes reject chain-revisions longer than the cooldown period (doesn't help any nodes out of date longer than the cooldown period tho)
+* Some PoW randomness could be introduced that prevents prediction beyond the satoshi cooldown period. For example, the farthest PoW block within 30 blocks could be used as part of the seed for the minter progression. This would open up a small stake grinding possibility, but would likely require so much extra hashpower as to make it infeasible for the attacker to generate a block that matches the their predictions. One problem this brings up is what to do in the case that a PoW block hasn't been mined in the last 30 blocks. One solution to that is to simply force the blockchain to wait for one
+   * Similarly, switch the randomness to come entirely from the last PoW block (this could backfire tho as it introduces a way to stake grind)
 
 ### Economic Attack
 

@@ -1,8 +1,8 @@
-*Version: 0.2.0*
+*Version: 0.3.0*
 
 # Proof of Time-Ownership
 
-PoTO is a consensus protocol for ordering cryptocurrency transactions as an alternative to pure Proof of Work. PoTO is a hybrid of Proof of Work and Proof of Stake that sets up a time-based race for PoS blocks rather than using quorums or voting to mint blocks. As far as I'm aware, this is the only PoS or hybrid proposal that doesn't use quorums of voters of some kind to mint blocks.
+PoTO is a consensus protocol for ordering cryptocurrency transactions as an alternative to pure Proof of Work. PoTO is a hybrid of Proof of Work and Proof of Stake that sets up a time-based race for PoS blocks rather than using quorums or voting to mint blocks. As far as I'm aware, this is the only PoS or hybrid proposal that uses chronological progressions to determine who wins the chance to mint a block.
 
 Proof of work is a solid and secure mechanism for determining a canonical order of transactions, but a PoW system’s security is linearly related to expenditure of resources (which directly translates to transaction fees) and such a system is susceptible to centralization pressure that leaves a significant risk of a 51% attack. Also, there is the possibility (granted one that seems unlikely) that the amount of fees that must be paid for PoW to maintain enough security could be more than can be extracted via a fee market.
 
@@ -14,9 +14,9 @@ PoTO seeks to require a much smaller amount of hashpower for a given level of se
 
 # Benefits
 
-* Several orders of magnitude less hashpower required than pure PoW for a given level of security (ie cost of attack). 
+* Half has much hashpower required in comparison to pure PoW, for a given level of security (ie cost of attack).
+* The cost of attacking the system is theoretically the maximum for any similar hybrid protocol.
 * Everyone can participate in minting blocks with only the resources necessary to run a full node (with the same resource usage as Bitcoin)
-* Drastically reduces the effect of miner centralization
 * Increases the incentives to run a fully validating node
 * No additional network traffic over Bitcoin
 
@@ -83,17 +83,17 @@ There are two types of blocks that can be created: mined PoW blocks and minted P
 
 **Minter progression** - A time-bound progression of *minter* addresses that determines what addresses are valid minters at any given time. The address progression is determined using an algorithm known as follow-the-satoshi (defined below) along with a pseudo-random list of indexes.
 
-**Address hash** - `hash(prevAddrHash + minterAddr + height)`. This is a hash of the previous PoS block's address hash (the first PoS block omits this) concatenated with the address that minted the current block and the current block height. Only PoS blocks (not PoW blocks) have address hashes.
+**Minter seed** - `hash(prevPowHash + height)`. This is a hash of the previous PoW block's (normal) hash concatenated with the current block height.
 
 **Minter signature** - A message and a signature of that message that together prove a minter attempted to mint a particular block. The message contains the 18-byte ASCII "mintingTheBlockNow" followed by the hash of the last block and a hash of the block being minted.
 
 **Miner signature** - A message and a signature of that message required for a mined block to be valid. The message contains the 18-byte ASCII "miningThisBlockNow" followed by the height of the hash of the last block and a hash of the block being minted.
 
-**Satoshi cooldown period** - The number of blocks a given satoshi must not have moved in order to be eligible to part of the minter progression.
+**Satoshi cooldown period** - The period since the last PoW block, where a given satoshi must not have moved since that PoW block in order to be eligible to part of the minter progression.
 
 ## Validating a Block
 
-The *minter progression* is determined pseudo-randomly using the *address hash*. In this progression, X satoshi indexes are released each second, giving a chance for an active minter who owns one of those satoshi to mint a block. That number X is the inverse of the PoS difficulty, meaning that the difficulty is 1/X. The fewer satoshi indexes that are released each second, the higher the difficulty.
+The *minter progression* is determined pseudo-randomly using the *minter seed*. In this progression, X satoshi indexes are released each second, giving a chance for an active minter who owns one of those satoshi to mint a block. That number X is the inverse of the PoS difficulty, meaning that the difficulty is 1/X. The fewer satoshi indexes that are released each second, the higher the difficulty.
 
 Proof of Work blocks are mined alongside the minted PoS blocks. The target block-time for PoW blocks should be the same as the target block time for PoS blocks, but the size of PoW blocks should probably be larger than the PoS blocks (since hashpower is critical for the security of the system).
 
@@ -110,13 +110,13 @@ To mint a block, the block is hashed and that hash is signed with the minter's a
 
 ## Follow-the-Satoshi
 
-The [follow-the-satoshi algorithm](https://www.decred.org/research/bentov2014.pdf) is any algorithm that assigns a unique index from 0 to X-1 to each of X relevant satoshi. For PoTO, the relevant satoshi are any satoshi that haven't been moved for at least 30 blocks (so people can't influence their probability of minting by sending their funds to a new wallet with a higher probability of being given minter rights) and is also part of an address that contains at least enough funds to cover the minter punishment if it becomes applicable (more info below). The order is completely arbitrary and does not need to be random (since the miner progression is random).
+The [follow-the-satoshi algorithm](https://www.decred.org/research/bentov2014.pdf) is any algorithm that assigns a unique index from 0 to X-1 to each of X relevant satoshi. For PoTO, the relevant satoshi are any satoshi that haven't been moved since the last PoW block (so people can't influence their probability of minting by sending their funds to a new wallet with a higher probability of being given minter rights) and is also part of an address that contains at least enough funds to cover the minter punishment if it becomes applicable (more info below). The order is completely arbitrary and does not need to be random (since the miner progression is random).
 
 An example way to implement this is to take the UTXO set and order each output from oldest to newest, assign the first M indexes to the oldest unspent output of M satoshi, the next N indexes to the next oldest unspent output of N satoshi, etc. This would index the satoshi in order from oldest to newest.
 
 ## Determining the Minter Progression
 
-The current minter progression is determined using the address hash of the last PoS block. This can be any algorithm that creates a deterministic pseudo-random list of satoshi indexes from 0 to N where N is the number of relevant satoshi indexed by the follow-the-satoshi algorithm, using the address hash as a seed.
+The current minter progression is determined using the *minter seed*. This can be any algorithm that creates a deterministic pseudo-random list of satoshi indexes from 0 to N where N is the number of relevant satoshi indexed by the follow-the-satoshi algorithm, using the *minter seed* as a seed.
 
 ## Determining Chain-length
 
@@ -189,11 +189,32 @@ Since deciding which fork to follow can only be done by fully validating nodes, 
 
 PoTO's PoS blocks could be augmented by changing the minter progression from specifying individual satoshi to specifying specific sets of N satoshi that must all sign the block in order for it to be valid, similar to the set of N winners in Proof-of-Activity. This could raise PoTO's theoretical security to the level of PoA without introducing PoA's suceptibility to a hashpower monopoly attack.
 
+## Switchover Extension
+
+If PoTO is added to an existing cryptocurrency, like Bitcoin, it wouldn't be wise to switch over abruptly because the system would start out with no active minters, giving an attacker the opportunity to exploit that to their benefit by becoming a large fraction of the set of active minters. To prevent this weakness, the chain-length equation could start without any consideration of PoS blocks and could be switched over to the chain-length equation shown above once enough active stake is in the system. Everything else about the protocol could be kept in place, including PoS block rewards (to entice people to actively mint).
+
+## Length Normalization
+
+Its possible that the chain-length equation above would de-emphasize accumulated PoS difficulty over time, since while PoS difficulty can max out at 100% actively minting coins, PoW difficulty can grow without theoretical bound (if a boundary caused by the current implementation is reached, that boundary can theoretically be removed, whereas the same isn't true of PoS difficulty). In other words, there will be some equilibrium reached where PoS difficulty maxes out, while processing cost will continue to decrease (thereby increasing the PoW difficulty). Because of this, every PoS block will add less to the chain than the last one (ie the last block's `PoSDifficulty/totalPoSDifficulty` will trend downward over time). PoW blocks have this effect, but to a lesser degree as the PoW difficulty will increase over time. 
+
+If this is indeed the case, the length equation could be changed to the following:
+
+`Sum(PoWDifficulty*RecentAccumulatedPoSDifficulty^(N*commonProportion))`  
+
+where
+
+* `PoWDifficulty` is the difficulty of the last PoW block, and
+* `RecentAccumulatedPoSDifficulty` is the sum of difficulties of all the PoS blocks that have happened since the last PoS block.
+
+In any case, more analysis is needed on this issue.
+
 # Analysis
 
 ## Security, Cost of Mining, and Cost of Attack
 
 The premise of PoTO is that the security of proof-of-work can combine with the security of proof-of-stake. Because of the chain-length equation, the proportion of hashrate and stake an attacker must minimally have to successfully perform an attack is inversely related. Having just over 50% of each will always work, but this is almost never the cheapest way to attack. For example at N=1, with 75% of the hashrate (3 times the honest hashrate) an attacker would only need 1/3 of the active stake, and at N=3, an attacker with 75% of the hashrate needs a little over 40% of the active stake.
+
+Note that the possibility for the Economic Hashpower Monopoly Attack mostly makes the following analysis moot, since it is the cheapest way to attack the system as long as the cost found by this method exceeds the maximum amount of hashpower that can profitably mine. 
 
 The equation for finding the minimal cost of a successful longest-chain (*51%-style*) attack is:  
 
@@ -278,55 +299,46 @@ Since the addresses that are able to mint the next PoS block are known as soon a
 
 ### Nothing at Stake
 
-Since there is no punishment or downside for minters to mint on top of all unresolved PoS chains, its likely every active minter that comes up in the progression will attempt to propagate their block, creating a number of competing PoS chains that will only resolve to a single chain when a PoW block is mined on one of the chains. In a pure proof-of-stake system, this is a problem since chains may keep branching and never resolve to one definitely-longest chain. However in PoTO, the PoW blocks serve as the deciding factor for which chain ends up being the longest. On average only 1 PoS block will happen between PoW blocks, and it would be very rare for 3 or more PoS blocks to happen between two PoW blocks. In any case, the nothing at stake problem is limited to being a problem only for the amount of time that has passed since the last PoW block - which is why a transaction shouldn't be considered confirmed until it has had at least one PoW confirmation.
+Since there is no punishment or downside for minters to mint on top of all unresolved PoS chains, its likely every active minter that comes up in the progression will attempt to propagate their block, creating a number of competing PoS chains that will only resolve to a single chain when a PoW block is mined on one of the chains. In a pure proof-of-stake system, this is a problem since chains may keep branching and never resolve to one definitely-longest chain. However in PoTO, the PoW blocks serve as the deciding factor for which chain ends up being the longest. On average only 1 PoS block will happen between PoW blocks, and it would be very rare for 3 or more PoS blocks to happen between two PoW blocks. In any case, the nothing-at-stake problem is limited to being a problem only for the amount of time that has passed since the last PoW block - which is why a transaction shouldn't be considered confirmed until it has had at least one PoW confirmation.
 
 ### Time shifting
 If actors are incentivized to alter network-time to their advantage, things could go wrong. People might want to pretend time is moving faster in order to see more minting rewards. However, hopefully there would be enough honest actors to counteract this. Shifting time backward (pretending time is moving slower) could give current potential minters more time to realize they're a potential miner, mine, and broadcast the next block, but any active minter is probably instantly aware of this already and minting a block would be a fast operation. Broadcasting can take some seconds, and so might provide some small incentive to time-shift backward. But even if network-time becomes shifted over time, the accuracy of network time isn't that important, only approximate consistency.
 
-### Initial Centralization
+### Initial Centralization and long-term centralization
 Since only people who have coins can mint PoS blocks, those people would have an advantage in gaining new coins. This wouldn't be as much of a problem as in pure PoS protocols, since perhaps only ~10% of block rewards (and generated coinbase coins) would be given to minters. But if this is still a concern, the coinbase rewards for minters could be lowered or even eliminated if that was deemed appropriate.
 
-### Two-in-a-row minter problem
-It would sometimes happen where a minter's addresses come up multiple times in a short span, giving that minter the opportunity to choose which address to mint with (which would multiply their chances of minting the next block). While this would be very very rare for anyone who doesn't own massive amounts of coin, it would happen sometimes. However, this is limited by PoW blocks, which may be mined at any time with the same frequency as PoS blocks. If someone's address comes up in the progression twice in a short span, they risk losing the block entirely if a PoW block gets mined while they wait for a block minted by their second address to be accepted.
+Some have brought up the idea that proof-of-stake makes the rich get richer, so to speak. The idea is that the people who have more money will make more money and this would somehow lead to the largest owners eventually owning all the coins. However, this isn't actually what would happen. Since each actively minting address has a chance of minting exactly proportional to their ownership, this means that your expected ROI for minting (as a percentage) will be the same no matter how much coin you own. This means that if everyone is actively minting, no one will gain or lose anything on average over time, tho those that are actively minting would gain more than those that aren't.
 
 ### Opportunistic mining halt
 A miner may stop mining if one of their addresses is coming up soon enough in the miner progression to maximize their chances to mint the next PoS block. While this could theoretically happen, the opportunity to do this should be very rare and the only problem it would cause is a 1-block temporary PoW slow down. Also, the incentives don’t promote this behavior, since mining a PoW block would be much more lucrative than minting a PoS block.
 
-### Opportunistic chain switching
-Because of the minter behavior related to the nothing-at-stake issue, a miner may have a handful of chains to mine on top of and could choose the one that maximizes their chances to mint the next PoS block. This does give an advantage on minting PoS blocks to PoW miners, and a bigger advantage to larger pools (with more hashpower and coin ownership).
-
-One way to minimize this effect is to make the blocktime for PoS blocks much longer than the blocktime for PoW blocks. For example, if the blocktimes were equal, then there should be a 50% chance of a second minter address to come up before a PoW block is found, at which point a miner would have two valid blocks to choose to mine on top of - doubling their chances of minting the next PoS block. But if PoS blocktime target were twice that of the PoW blocks, the likelihood is cut in half to 25% of the time.
-
 ### Prediction Attack
 
-Because of the 30-block *satoshi cooldown period*, as long as no one can predict all the minters for the next 30 blocks, no one can move their coins around to gain an advantage in minting. But if an actor could predict blocks in advance further out than the *satoshi cooldown period*, they could potentially be able to mint far more blocks than they would otherwise have been able to - potentially taking over the chain. To do this, an attacker would predict the *minter progression* for the block 31 blocks from now, then generate addresses until those addresses give them a high chance to mint that block.
+A prediction attack would be executed by predicting what minter addresses will come up for some blocks in the future, generating addresses that come up very early in the minter progression, then moving their funds into those addresses so they can mint a higher proportion of blocks than their coin ownership would normally allow. However, because PoTO uses PoW to determine the minter progression, as long as a proof-of-work hash can be considered a random oracle, accurately predicting the minter progression should be impossible.
 
-Without also having control over more than 50% of the hashpower, this should be practically impossible, since the blockheights at PoW blocks will be mined change what the *Address Hash* will be in future blocks. An attacker would have to predict not only which blocks at which heights would be minted by which *exact* addresses, but would have to also know what block heights will be instead mined by PoW miners.
+A note about stake grinding should be made here. While an attacker could stake grind a PoW block in order to give themselves a better chance of coming up early in the minter progression, this would require them to throw away a valid block they could gain a reward from. It would always be more beneficial for an attacker to add their PoW block to the chain as normal, since this doesn't in any way reduce their chances of finding a block where their addresses come up early in the progression. The section on opportunistic miner halting above discusses how a miner *could* give themselves a minting advantage.
 
-Howerver, if the attacker has greater than 50% of the hashpower, they could influence which PoW blocks are mined, and which aren't. If their prediction predicted that a PoW block would not be mined at a particular height but one was found, if the expected minter created and propagated their block (perhaps ahead of time), the attacker can mine on top of that minted block instead. And similarly, if a PoS block was minted where the attacker predicted a PoW block, the attacker could mine a PoW block at that height so that minters will then mint on top of it. The first correction is much less likely to be successful than the second correction, but both are frustrated by honest miners and minters who will be following the longest chain. An attacking miner can also withhold their hashpower for blocks at heights they expect a minted PoS block. How successful this kind of manipulation would be would depend on the distribution of addresses that are actively minting as well as how much hashpower and stake the attacker has. 
-
-If nearly 100% of the coins are used to actively mint, this attack can become much easier. If the attacker can accurately predict all the minter addresses that will be able to mint the next 30 blocks, all that's left to do is predict which blocks will be PoW blocks where the technique described in the previous paragraph could be useful.
-
-Also, in the case of a hidden-chain attack, since the attacker controls all the blocks in the chain, they could potentially move coins around such that they could then mint blocks at a highly accellerated rate in comparison to the honest chain, even without any significant fraction of the online stake, after the 30 block cooldown period has passed.
-
-Potential ways to mitigate this problem:
-
-* Increase the number of blocks a satoshi must have been unmoved for to be eligible for minting. The *satoshi cooldown period* could be increased to 300 or 3000 blocks without much reduction in coins eligible for minting.
-* Make the process of determining where in the minter progression an address falls be expensive
-* Have honest nodes reject chain-revisions longer than the cooldown period (doesn't help any nodes out of date longer than the cooldown period tho)
-* Some PoW randomness could be introduced that prevents prediction beyond the satoshi cooldown period. For example, the farthest PoW block within 30 blocks could be used as part of the seed for the minter progression. This would open up a small stake grinding possibility, but would likely require so much extra hashpower as to make it infeasible for the attacker to generate a block that matches the their predictions. One problem this brings up is what to do in the case that a PoW block hasn't been mined in the last 30 blocks. One solution to that is to simply force the blockchain to wait for one
-   * Similarly, switch the randomness to come entirely from the last PoW block (this could backfire tho as it introduces a way to stake grind)
-
-### Economic Attack
+### Economic Hidden-chain Attack
 
 A "25% attack" or [economic attack](https://bitcoinmagazine.com/articles/selfish-mining-a-25-attack-against-the-bitcoin-network-1383578440/) is where a selfish mining (and/or minting) strategy can allow a particular entity to gain more than their fair share of blocks and thereby either run honest miners out of the system by reducing their revenue below protitable levels or incentivize miners to join their coalition of selfish mining. Both of these outcomes increase the risk of a single entity or coalition gaining enough hashpower/stake to control the chain and do things like double-spend. [A paper](https://arxiv.org/abs/1311.0243) was written that talked about how Bitcoin is susceptible to this attack no matter how much hashpower the attacker has and suggested a partial-fix that when a miner has two potential chains of equal length to mine on top of, they randomly choose the chain to mine on top of. The paper says this makes it so the attacker requires 25% hashpower and goes on to say that theoretically there is no fix that could make this requirement larger than 33%. PoTO likely has this same problem, tho rather than being 25% it would be half the usual requirement of combined hashpower and stake, in turn halving the cost of an attack - however this is just conjecture until further analysis is done.
 
-### Hashpower Monopoly Attack
+### Orphan-based Hashpower Monopoly Attack
 
 For hybrid systems that rely on bpth PoW and PoS, like PoA, an attacker with greater than 50% of the hashpower can push out other miners and monopolize the generation of PoW blocks. The attacker would gain more than 50% of the hashpower, then simply refuse to mine (and/or mint in the case of PoTO) on top of any chain that contains new PoW blocks created by another miner and instead selfishly mine (and mint) only on the chain where the last PoW block was their's. Since the blocks would be valid blocks propagated normally through the network, any honest minter would mint blocks on top of the attacker's blocks, giving the attacker's chain just as much PoS as the honest chain. However, it would have more PoW and therefore would be the longest chain. At that point, no other miner would be able to make money and would be forced to exit the network, giving the attacker 100% or almost 100% of the hashpower. The attacker could then use their near complete control of the hashpower to perform other attacks with very little coin ownership.
 
 PoTO fixes this problem using minter punishments that incentivize minters to only mine on a chain if they think it will end up being the longest. This incentivizes rational minters to ignore shorter chains they have the opportunity to mint on, and only mint on top of the longest chain they're aware of (to minimize their chance of being punished).
 
+### Economic Hashpower Monopoly Attack
+
+Consider a mining environment where mining has near-break-even revenue (or exactly break-even considering opportunity cost) and where there are no altruistic honest miners willing to mine at a loss. In such a situation, any entering hashpower would correspond with an exit of a similar amount of hashpower (theoretically an identical amount of hashpower, given identical hashpower costs). What this means is that an attacker willing to mine 100% of the blocks at a loss can obtain 100% of the (active) hashpower. 
+
+The attacker with cost-effective hashpower could slowly obtain more and more hashpower while incurring very little loss, since any consistent loss is unsustainable for miners mining as a business and the hashpower would quickly reduce such that active miners would again be profitable). However, the quicker the attacker gains this hashpower, the less loss they would incur. For bitcoin's 2-week difficulty periods, if the attacker obtains all the hashpower in that 2-week period, they would incur no loss at all during that time, and would only incur loss for the amount of time it takes the honest hashpower to stop mining bitcoin (probably to switch to a different cryptocurrency) once the difficulty adjusts.
+
+Because this attack vector has nothing to do with manipulating the blockchain in dishonest ways, there's no way to prevent anyone from executing this, other than by increasing the cost of obtaining enough hashpower that operating that hashpower exceeds the revenue obtained via mining blocks. This means that any system that relies on the attacker not achieving near-100% of the hashpower is suceptible to this. Bitcoin is of course suceptible to this, but since there are cheaper attacks on bitcoin (ie a 51% attack) its suceptibility doesn't matter. But for protocols with the goal of reducing the amount of hashpower the system needs to be secure, this would likely be the cheapest attack vector. 
+
+Even detecting this attack would be difficult as this would look like some miners simply found a more cost-effective way to mine. What you would see is that the honest miners who identify themselves in blocks will stop mining. Once a lot of such miners exit the system, the only way to prevent the attack would be to add more block revenue (coinbase reward and fees).
+
+So while PoTO is more secure for a given amount of hashpower than pure-PoW protocols, the cost of an attack is only doubled (from 50% of the profitable hashpower to 100%). And this should actually be the theoretical maximum security of any consensus protocol that has attack vectors if the attacker gains 100% of the hashpower. 
 
 ### Minter Bribery
 
@@ -376,9 +388,11 @@ Furthermore, the cost of successfully executing a censorship attack is equal to 
 
 PoA is also suceptible to the PoW Monopoly Attack, where an attacker gains more than 50% of the hashpower and monopolizes the generation of PoW blocks, pushing any other miner out of business. The attacker would gain more than 50% of the hashpower, then simply refuse to mine on top of any chain that contains new PoW blocks created by another miner and instead selfishly mine on the chain where the last PoW block was their's. Since the blocks would be valid blocks propagated normally through the network, any honest minter would mint blocks on top of the attacker's blocks, giving the attacker's chain just as much PoS as the honest chain. However, the attacker's chain would have more hashpower and therefore would be the longest chain. At that point, no other miner would be able to make money and would be forced to exit the network, giving the attacker 100% or almost 100% of the hashpower. The attacker could then use their near complete control of the hashpower to perform other attacks with very little coin ownership. Since blocks can't be created without a miner, I don't see a way to fix this problem in PoA without fundamentally changing the PoA protocol.
 
-## Comparison to Decred's Consensus Protocol
+[Decred](https://docs.decred.org/research/hybrid-design/), [Memcoin2](https://www.decred.org/research/mackenzie2013.pdf), [Hcash](https://h.cash/themes/en/dist/pdf/HcashWhitepaperV0.8-edited.pdf), the [2-hop Blockchain](https://eprint.iacr.org/2016/716.pdf) and the related [TwinsCoin](https://eprint.iacr.org/2017/232.pdf) all have very similar protocols to PoA and also have similar problems. All use PoS and PoW in lock step: a PoW block is mined and then a PoS stage chooses a validator or group of validators who then sign the PoW block (in the case of the 2-hop Blockchain, the PoS mint a single new block). If no validator signs the block, a new PoW block is mined which chooses a different validator that will sign the block. In all of these protocols PoS simply validates a PoW block, but doesn't compete against it. 
 
-Decred is somewhat similar to PoA, with some key differences including the need to buy stake "tickets" (similar to staking ether in Casper) and requires 3 of 5 block signers vs PoA's requirement that all N winners sign the block for it to be valid. Decred's support for stakepools enables and encourages centralization and discourages people from running their own full nodes (which is important for having a say in the case of a fork). Decred hasn't given any information on the cost of attacking the system, but it looks to be less costly than both PoA and PoTO. Decred has a censorship attack problem, where anyone with 51% of the hashpower can successfully censor transactions indefinitely even with no stake. Decred is also vulnerable to the PoW Monopolization Attack, just like PoA.
+Because of this lock-step behavior, all these coins are vulnerable to the PoW Monopoly Attack, just like PoA. Decred, Memcoin2, and Hcash also are vulnerable to the censorship attack problem, where anyone with 51% of the hashpower can successfully censor transactions indefinitely even with no stake. 
+
+Decred and Memcoin2 also require stakers to buy stake "tickets" (similar to staking ether in Casper). It's unclear to me whether that has any significant security consequences. Decred's support for stakepools enables and encourages centralization and discourages people from running their own full nodes (which is important for having a say in the case of a fork). Decred hasn't given any information on the cost of attacking the system, but it looks to be less costly than both PoA and PoTO, since only 3 of 5 block signers vs PoA's requirement that all N winners sign the block for it to be valid. 
 
 Discussion and Review
 =====================
@@ -388,6 +402,10 @@ Please feel free to use the github issues as a forum for questions and discussin
 Version History
 ===============
 
+* 0.3.1 - Adding a discussion of the Economic Hashpower Monopoly Attack, which significantly reduces the security of PoTO (and all other similar hybrid protocols) to about twice the security of pure PoW.
+* 0.3.0
+	* Getting rid of the address hash which considered the last PoS block's address hash, and replacing it with the *minter seed* which considers only the last PoW block hash and the current block height to solve the prediction attack problem
+	* Removing the sections on the two-in-a-row minting issue and opportunistic chain switching, since that's resolved by switching to a minter seed that doesn't consider anything from PoS blocks.
 * 0.2.0
 	* Added the `N` component to the chain-length equation, which substantially boslters the security of PoTO for networks with a low amount of hashpower.
 	* Added minter punishments

@@ -1,4 +1,4 @@
-*Version: 0.3.0*
+*Version: 0.3.1*
 
 # Proof of Time-Ownership
 
@@ -40,6 +40,10 @@ PoTO seeks to require a much smaller amount of hashpower for a given level of se
 - [Protocol Extensions](#protocol-extensions)
   * [Measuring Attack-cost and Fee-level Retargeting](#measuring-attack-cost-and-fee-level-retargeting)
   * [Multiple PoW algorithms](#multiple-pow-algorithms)
+  * [Incentivizing full valiation by Proof of UTXO](#incentivizing-full-valiation-by-proof-of-utxo)
+  * [PoA Extension](#poa-extension)
+  * [Switchover Extension](#switchover-extension)
+  * [Length Normalization](#length-normalization)
 - [Analysis](#analysis)
   * [Security, Cost of Mining, and Cost of Attack](#security-cost-of-mining-and-cost-of-attack)
     + [Derivation](#derivation)
@@ -50,13 +54,12 @@ PoTO seeks to require a much smaller amount of hashpower for a given level of se
     + [DDOS risk](#ddos-risk)
     + [Nothing at Stake](#nothing-at-stake)
     + [Time shifting](#time-shifting)
-    + [Initial Centralization](#initial-centralization)
-    + [Two-in-a-row minter problem](#two-in-a-row-minter-problem)
+    + [Initial Centralization and long-term centralization](#initial-centralization-and-long-term-centralization)
     + [Opportunistic mining halt](#opportunistic-mining-halt)
-    + [Opportunistic chain switching](#opportunistic-chain-switching)
     + [Prediction Attack](#prediction-attack)
-    + [Economic Attack](#economic-attack)
-    + [Hashpower Monopoly Attack](#hashpower-monopoly-attack)
+    + [Economic Hidden-chain Attack](#economic-hidden-chain-attack)
+    + [Orphan-based Hashpower Monopoly Attack](#orphan-based-hashpower-monopoly-attack)
+    + [Economic Hashpower Monopoly Attack](#economic-hashpower-monopoly-attack)
     + [Minter Bribery](#minter-bribery)
 - [Comparisons](#comparisons)
   * [Comparison to Pure Proof of Work](#comparison-to-pure-proof-of-work)
@@ -64,7 +67,6 @@ PoTO seeks to require a much smaller amount of hashpower for a given level of se
       - [Long-Range 51% Attacks](#long-range-51%25-attacks)
   * [Comparison to Ethereum's Casper Proof of Stake system](#comparison-to-ethereums-casper-proof-of-stake-system)
   * [Comparison to Proof of Activity](#comparison-to-proof-of-activity)
-  * [Comparison to Decred's Consensus Protocol](#comparison-to-decreds-consensus-protocol)
 - [Discussion and Review](#discussion-and-review)
 - [Version History](#version-history)
 - [License](#license)

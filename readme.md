@@ -256,7 +256,8 @@ The 30-day cooldown period a miner must wait to use for their miner-stake to unl
 
 ## Cost Analysis of the Hash-Stake Extension
 
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Attack Inequality: `a*HashCost*(b*MinterStakeCost)^N > HashCost*MinterStakeCost^N`  
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Attack Inequality: `a*HashCost*(b*MinterStakeCost)^N > HashCost*MinterStakeCost^N`
+
 where  
 * *a* is the multiple of honest mining power the attacker has
 * *b* is the multiple of honest active stake the attacker has
@@ -273,20 +274,20 @@ where
 
 You might think the cost of obtaining a times the honest mining power would be `a*(HashCost + MinerStakeCost)`, but the Economic Mining Monopoly Attack means that buying any new mining power will lead to an exit of honest mining power equal to what the attacker obtained. This brings the cost down to a multiple of just `a/(a+1)` rather than `a`.
 
-**For N=0**, the Attack Inequality can be simplified to:
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;`a > 1`
-This means that the minimum attack cost is where `a = 1`. From this we can transform the costOfAttack to its minimum cost:
+**For N=0**, the Attack Inequality can be simplified to:  
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;`a > 1`  
+This means that the minimum attack cost is where `a = 1`. From this we can transform the costOfAttack to its minimum cost:  
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;`1/2*(HashCost + MinerStakeCost)`
 
 So from this, we can see that even without any PoS minting at all, we can decrease the hashpower necessary to maintain a particular level of security as long as `MinerStakeCost` can make up the rest of the cost-of-attack. For example, if `2*MinerStakeCost` exceeds the target cost-of-attack, `HashCost` can theoretically be made arbitrarily low. In the case of N>0, making `HashCost` does open up the possibility of stake grinding, however at N=0 this obviously doesn't matter.
 
-**For N>0**, things get a lot more complicated. The simplified Attack Inequality turns into:
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;`a*b^N > 1`
-This means that the minimum attack cost is where `a*b^N = 1`. So in the case of a minimum-cost attack:
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;`a = b^-N`
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;`b = a^(-1/N)`
-From this we can transform the costOfAttack to:
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;`a/(1+a)*(HashCost + MinerStakeCost) + a^(-1/N)*StakeCost`
+**For N>0**, things get a lot more complicated. The simplified Attack Inequality turns into:  
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;`a*b^N > 1`  
+This means that the minimum attack cost is where `a*b^N = 1`. So in the case of a minimum-cost attack:  
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;`a = b^-N`  
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;`b = a^(-1/N)`  
+From this we can transform the costOfAttack to:  
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;`a/(1+a)*(HashCost + MinerStakeCost) + a^(-1/N)*StakeCost`  
 
 At this point, the method for finding the minimum cost of attack might involve getting the derivative of this, then finding the zeros of that derivative and using that to find the minimum cost of attack. However, the math got far too complicated for me. I'm looking for someone to help me co-author this proposal and do some of this more complex mathematics to find the minimum cost of attacking PoTO with the Economic Mining Monopoly Attack in mind. 
 

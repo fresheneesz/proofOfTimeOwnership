@@ -1,4 +1,7 @@
-*Version: 0.3.1*
+*Version: 0.4.0*  
+*Status: WIP*
+
+**NOTE: I'm looking for a mathemetician to co-author this proposal with me, and do the more complex mathematics involved in calculating the minimum cost of attack with the Economic Mining Monopoly Attack in mind.**
 
 # Proof of Time-Ownership
 
@@ -8,14 +11,13 @@ Proof of work is a solid and secure mechanism for determining a canonical order 
 
 Proof of Stake has the ability to decouple the security of the blockchain from resource expenditure, but has its own substantial problems including the issue of resolving competing chains (the nothing-at-stake problem), the ability to cheaply create a fresh blockchain that compares as longer to the “true” chain, the risk of validator quorum capture, stake grinding, the fact that requiring users locking up funds limits how many people can participate in minting blocks, among other issues.
 
-Other hybrid protocols that mitigate some of these problems have the problems of potentially significantly increased network traffic, higher risk of censorship attacks (both apply to [PoA](https://eprint.iacr.org/2014/452.pdf), [Decred](https://docs.decred.org/research/hybrid-design/), [Memcoin2](https://www.decred.org/research/mackenzie2013.pdf), [Hcash](https://h.cash/themes/en/dist/pdf/HcashWhitepaperV0.8-edited.pdf), the [2-hop Blockchain](https://eprint.iacr.org/2016/716.pdf) and the related [TwinsCoin](https://eprint.iacr.org/2017/232.pdf)), are suceptible to a hashpower monopoly attack (described below), or don't allow a large fraction of coin owners to practically mint blocks (eg Decred and Memcoin2).
+Other hybrid protocols that mitigate some of these problems have the problems of potentially significantly increased network traffic, higher risk of censorship attacks (both apply to [PoA](https://eprint.iacr.org/2014/452.pdf), [Decred](https://docs.decred.org/research/hybrid-design/), [Memcoin2](https://www.decred.org/research/mackenzie2013.pdf), [Hcash](https://h.cash/themes/en/dist/pdf/HcashWhitepaperV0.8-edited.pdf), the [2-hop Blockchain](https://eprint.iacr.org/2016/716.pdf) and the related [TwinsCoin](https://eprint.iacr.org/2017/232.pdf)), are suceptible to two types of mining monopoly attacks (described below), or don't allow a large fraction of coin owners to practically mint blocks (eg Decred and Memcoin2).
 
 PoTO seeks to require a much smaller amount of hashpower for a given level of security without exibiting these problems by creating a hybrid protocol that doesn’t use lock-in staking or minter quorums, and doesn't require a PoW component for every block.
 
 # Benefits
 
-* Half has much hashpower required in comparison to pure PoW, for a given level of security (ie cost of attack).
-* The cost of attacking the system is theoretically the maximum for any similar hybrid protocol.
+* Potentially significantly less hashpower (less than half) required in comparison to pure PoW, for a given level of security (ie cost of attack).
 * Everyone can participate in minting blocks with only the resources necessary to run a full node (with the same resource usage as Bitcoin)
 * Increases the incentives to run a fully validating node
 * No additional network traffic over Bitcoin
@@ -44,6 +46,8 @@ PoTO seeks to require a much smaller amount of hashpower for a given level of se
   * [PoA Extension](#poa-extension)
   * [Switchover Extension](#switchover-extension)
   * [Length Normalization](#length-normalization)
+  * [Hash-Stake Extension](#hash-stake-extension)
+  * [Analysis of the Hash-Stake Extension](#analysis-of-the-hash-stake-extension)
 - [Analysis](#analysis)
   * [Security, Cost of Mining, and Cost of Attack](#security-cost-of-mining-and-cost-of-attack)
     + [Derivation](#derivation)
@@ -58,8 +62,8 @@ PoTO seeks to require a much smaller amount of hashpower for a given level of se
     + [Opportunistic mining halt](#opportunistic-mining-halt)
     + [Prediction Attack](#prediction-attack)
     + [Economic Hidden-chain Attack](#economic-hidden-chain-attack)
-    + [Orphan-based Hashpower Monopoly Attack](#orphan-based-hashpower-monopoly-attack)
-    + [Economic Hashpower Monopoly Attack](#economic-hashpower-monopoly-attack)
+    + [Orphan-based Mining Monopoly Attack](#orphan-based-mining-monopoly-attack)
+    + [Economic Mining Monopoly Attack](#economic-mining-monopoly-attack)
     + [Minter Bribery](#minter-bribery)
 - [Comparisons](#comparisons)
   * [Comparison to Pure Proof of Work](#comparison-to-pure-proof-of-work)
@@ -89,8 +93,6 @@ There are two types of blocks that can be created: mined PoW blocks and minted P
 
 **Minter signature** - A message and a signature of that message that together prove a minter attempted to mint a particular block. The message contains the 18-byte ASCII "mintingTheBlockNow" followed by the hash of the last block and a hash of the block being minted.
 
-**Miner signature** - A message and a signature of that message required for a mined block to be valid. The message contains the 18-byte ASCII "miningThisBlockNow" followed by the height of the hash of the last block and a hash of the block being minted.
-
 **Satoshi cooldown period** - The period since the last PoW block, where a given satoshi must not have moved since that PoW block in order to be eligible to part of the minter progression.
 
 ## Validating a Block
@@ -108,7 +110,7 @@ A node will accept a block as valid if:
   2a. Its a PoS block and the address that signed the block (to mint it) owns a satoshi that has come up in the minter progression for that block before that block's timestamp
   2b. Its a PoW block and the block's hash is less than or equal to what the PoW difficulty requires (ie just like Bitcoin)
 
-To mint a block, the block is hashed and that hash is signed with the minter's address along with a 
+To mint a block, the minter simply creates a *minter signature* for that block and propagates it with the minted block.
 
 ## Follow-the-Satoshi
 
@@ -145,15 +147,15 @@ The `N` component allows the system to remain secure even if the attacker has a 
 
 ## Minter Punishment
 
-The ability for PoS minters to mint on shorter chains in the hopes they become the longest chain (ie the nothing-at-stake problem) opens up the possibility of a Hashpower Monopoly Attack. 
+The ability for PoS minters to mint on shorter chains in the hopes they become the longest chain (ie the nothing-at-stake problem) opens up the possibility of the Orphan-based Mining Monopoly Attack.
 
 To combat this, the PoTO protocol allows a minter or miner to include a proof, in their minted or mined block, that another minter attempted to mint a block on a chain where the most recent PoW block is different from the chain in which the proof is included. If a valid proof is included in a block, the minter punishment fine transferred from the address that minted the offending block to the address that mined or minted the block in which the proof was given, and if the address no longer contains enough coins to cover the fine, the minimum number of most recent transactions from that address will be invalidated in order to make enough coins available to cover the fine. 
 
 The proof will only be valid if the difference in height of the block in which the proof is given and the offending block about which proof is given is 5 or less. This is so there is a tight upper bound on how long a receiver must wait to be sure that their received transaction can no longer be invalidated by a minter fine applied to the sender. Since 5 blocks at 2 minutes would be about 10 minutes, this would provide a similar confidence of finalization as one bitcoin confirmation.
 
-The proof consists of a chain of *minter signatures* and *miner signatures* that lead back to a block on the current chain. Any minter included in that chain after a PoW block that isn't in the current chain (for a block within 5 blocks of the current block) is fined. 
+The proof consists of a chain of *minter signatures* (and *miner signatures* in the case that the Hash-Stake Extension is being used) that lead back to a block on the current chain. Any minter included in that chain after a PoW block that isn't in the current chain (for a block within 5 blocks of the current block) is fined. 
 
-This punishment should be able to both solve the nothing-at-stake problem as well as the Hashpower Monopoly Attack and does it in a way that doesn't require any locked-in stake so that there are no barriers to actively minting blocks.
+This punishment should be able to both solve the nothing-at-stake problem as well as the Mining Monopoly Attack and does it in a way that doesn't require any locked-in stake for minters so that there are no barriers to actively minting blocks.
 
 ## Confirmations and Transaction Finalization
 
@@ -179,6 +181,8 @@ A proxy-minting-rights message could also include a fee amount that can be given
 
 The cost of an attack can be measured by measuring the cost of the hashpower and the active stake. The cost of the hashpower will tend toward miner revenues (fees and coinbase rewards) so that can be used as an approximation for the cost of the hashpower. The active stake can be calculated by using the stake difficulty, since that is the reciprocal of how many satoshi are released per second. The total number of satoshi divided by the number of satoshi released every PoS block (~ every 4 minutes) would give you the number of actively minting satoshi. Using these measurements, an attack-cost target could be chosen (some amount of bitcoins, or some percentage of bitcoins mined so far, etc) from which you could derive the revenue per block necessary to maintain that attack-cost. Then that information could be used to dynamically change the block size such that the block revenue will then continue to support the chosen target for attack-cost. This would  both make mining revenue more consistent and ensures a certain minimum level of security while also minimizing fees.
 
+Note that in the case that the Hash-Stake Extension is being used, things are complicated a bit by the fact that hashpower isn't the only resource needed to mine. In that case, revenue from mining blocks should theoretically include the time-value of money for the miner-stake being used to mine. However, I would think this can be reasonably ignored as neglibigle for the purpose of this extension.
+
 ## Multiple PoW algorithms
 
 In order to reduce mining centralization, multiple PoW algorithms could be used side by side. This would allow more seamless switch over from one algorithm to another if one of the algorithms is determined to be unfit at any point. It would also likely decentralize mining since different hardware and setup would be needed for each algorithm. While this extension is orthogonal to the general hybrid idea and its likely that centralization of the PoW mining wouldn't cause nearly as much of a problem as with pure PoW, it still seems prudent to minimize mining centralization. One coin that currently does this is MyriadCoin.
@@ -189,7 +193,7 @@ Since deciding which fork to follow can only be done by fully validating nodes, 
 
 ## PoA Extension
 
-PoTO's PoS blocks could be augmented by changing the minter progression from specifying individual satoshi to specifying specific sets of N satoshi that must all sign the block in order for it to be valid, similar to the set of N winners in Proof-of-Activity. This could raise PoTO's theoretical security to the level of PoA without introducing PoA's suceptibility to a hashpower monopoly attack.
+PoTO's PoS blocks could be augmented by changing the minter progression from specifying individual satoshi to specifying specific sets of N satoshi that must all sign the block in order for it to be valid, similar to the set of N winners in Proof-of-Activity. This could raise PoTO's theoretical security to the level of PoA without introducing PoA's suceptibility to the Orphan-Based Mining Monopoly Attack. It would also allow more minters to be rewarded per minted block. However it would also increase the network traffic required for the protocol, since there would be many minted blocks that are propagated then eventually orphaned because of not having all N signatures needed. 
 
 ## Switchover Extension
 
@@ -197,7 +201,7 @@ If PoTO is added to an existing cryptocurrency, like Bitcoin, it wouldn't be wis
 
 ## Length Normalization
 
-Its possible that the chain-length equation above would de-emphasize accumulated PoS difficulty over time, since while PoS difficulty can max out at 100% actively minting coins, PoW difficulty can grow without theoretical bound (if a boundary caused by the current implementation is reached, that boundary can theoretically be removed, whereas the same isn't true of PoS difficulty). In other words, there will be some equilibrium reached where PoS difficulty maxes out, while processing cost will continue to decrease (thereby increasing the PoW difficulty). Because of this, every PoS block will add less to the chain than the last one (ie the last block's `PoSDifficulty/totalPoSDifficulty` will trend downward over time). PoW blocks have this effect, but to a lesser degree as the PoW difficulty will increase over time. 
+Its possible that the chain-length equation above would de-emphasize accumulated PoS difficulty over time, since while PoS difficulty can max out at 100% actively minting coins, PoW difficulty can grow theoretical without bound (if a boundary caused by the current implementation is reached, that boundary can theoretically be removed, whereas the same isn't true of PoS difficulty). In other words, there will be some equilibrium reached where PoS difficulty maxes out, while processing cost will continue to decrease (thereby increasing the PoW difficulty). Because of this, every PoS block will add less to the chain than the last one (ie the last block's `PoSDifficulty/totalPoSDifficulty` will trend downward over time). PoW blocks have this effect, but to a lesser degree as the PoW difficulty will increase over time. 
 
 If this is indeed the case, the length equation could be changed to the following:
 
@@ -210,13 +214,89 @@ where
 
 In any case, more analysis is needed on this issue.
 
+## Hash-Stake Extension
+
+Additional Terms: 
+
+**Miner-stake address** - An address with locked-in **miner-stake** funds required to mine blocks.
+
+**Miner-stake lock-in period** - The number of blocks a particular *miner-stake address* has its funds locked for.
+
+**Miner signature** - A message and a signature of that message required for a mined block to be valid. The message contains the 18-byte ASCII "miningThisBlockNow" followed by the height of the hash of the last block and a hash of the block being minted. The miner uses their *miner stake address* to create the signature.
+
+Description:
+
+Because of the Economic Mining Monopoly Attack, relying on miners puts an upper bound for the minimum cost of an attack at the cost of the maximum amount of miner resources that would remain profitable. In the case of pure-hashpower miners, this resource limit depends only on the cost of obtaining and maintaining hashpower. To increase this amount (and therefore the security of PoTO), the number of blocks a miner is able to mine can be tied to how much coin the miner owns in the following way:
+
+Before mining, a miner would lock-up funds (using a message mined into a prior block) in a *miner-stake address*, then sign a subsequent block with that single miner-stake address (or proxy address similar to what's described in the section on *Proxy Minting*) and include that signature in the block. A block will only be valid if the hash is lower than the difficulty (as normal) and the used *minter stake address* has mined fewer than `minerStakeLockinPeriod*totalCurrentMinerStake/minerStake` blocks.
+
+where
+
+* `minerStakeLockinPeriod` is the number of blocks the *miner-stake address* has locked up its funds for.
+* `minerStake` is the number of satoshi contained in the address the miner used to sign the block.
+* `totalCurrentMinerStake` is the total number of satoshi currently locked in *miner-stake addresses*.
+
+Coins can be added into a *miner-stake address* while its funds are locked and this can increase the number of blocks the miner can mine during the lock-in period. Coins in a *miner-stake address* **may not** be used for minting. When a *miner-stake address* is used to successfully mine a block, if its *lock-in period* ends sooner than 30 days-worth of blocks, the lock-in period is extended so that the coins are locked in for at least 30 more days-worth of blocks.
+
+Miner stake should not be poolable, so it might be prudent to only allow mining addresses where just one signature is required to spend funds - ie no pay-to-script-hash or multi-signature addresses, to ensure that there is only one controller of those funds (the miner). A problem with this is it limits a miner's ability to properly secure their funds (for example in an address where signatures from 2 or 3 members of the miner organization are required to spend funds). One solution might be to only allow a very specific subset of the possible range of multi-signature addresses, maybe only allow 2-of-2, 2-of-3 and 3-of-3 multi-signature addresses.
+
+## Analysis of the Hash-Stake Extension
+
+The Hash-Stake Extension would make it so miners can only mine a maximum percentage of blocks equal to the percentage of `minerStake` they have when mining. One of the primary effects of this is that the cost of a Mining Monopoly Attack is increased, since a miner not only has to own x% of hashpower, but also x% of the total miner-stake.
+
+Because the miner stake address locks up funds, a miner can't simply trade coins around in order to hash more blocks. Because miner-stake can't be (trustlessly) pooled, a miner can't easily obtain more miner-stake without purchasing it in full itself. And because miner-stake isn't allowed to be used in minting, an attacking miner must obtain *additional* coins if they want to successfully perform a longest-chain attack. 
+
+Steps should be taken to ensure that stake can't be pooled, because allowing stake to be pooled for mining would eliminate the benefits of this extension - a miner could simply use honest stake to perform the Mining Monopoly Attack. So it should be ensured that there are no easy ways for stake to be pooled in any trustless way. Of course, trust-based pooling methods would still be available, which could end up being a problem if there is any pressure to centralize miner stake pooled in such a way.
+
+Its also important that miner coin-ownership is rewarded proportionally to the number of coins - ie a miner with twice the coin should mine exactly twice as effectively. If twice as much coin ownership meant a miner would earn more than twice as much reward, this would act as pressure for miners to centralize toward one giant mining entity, which would be potentially dangerous. Note that the opposite is *note* true, if twice as much coin ownership meant a miner would earn less than twice as much reward, this would not provide any significant pressure to decentralize, because miners could simply split up their stake into multiple addresses.
+
+Smaller miners will have a lower ROI because the lock-in transaction costs the same no matter how much coin is being locked in. This should produce very little centralization pressure beyond a certain (small) miner size.
+
+The 30-day cooldown period a miner must wait to use for their miner-stake to unlock is there so miners can't attack the system and then immediately sell their stake. This provides some additional incentive for miners to play nice and not attack the system. The reasoning behind this is that miners who hold a significant amount of coin wouldn't want to attack the system because of the liklihood of losing the value of their held coins.
+
+## Cost Analysis of the Hash-Stake Extension
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Attack Inequality: `a*HashCost*(b*MinterStakeCost)^N > HashCost*MinterStakeCost^N`  
+where  
+* *a* is the multiple of honest mining power the attacker has
+* *b* is the multiple of honest active stake the attacker has
+
+While the attack inequality remains essentially the same with this extension, the cost of an attack changes a bit:
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;`costOfAttack = a/(a+1)*(HashCost + MinerStakeCost) + b*StakeCost`
+
+where
+
+* *HashCost* is the cost of acquiring an amount of hashpower equal to the honest hashpower in the system
+* *StakeCost* is the cost of acquiring an amount of coin equal to the honest actively minting coins in the system
+* *MinerStakeCost* is the cost of acquiring an amount of coin equal to the amount of coin being used to mine by honest miners **PLUS** the cost of acquiring an amount of hashpower equal to the amount of hashpower being used to mine by honest miners.
+
+You might think the cost of obtaining a times the honest mining power would be `a*(HashCost + MinerStakeCost)`, but the Economic Mining Monopoly Attack means that buying any new mining power will lead to an exit of honest mining power equal to what the attacker obtained. This brings the cost down to a multiple of just `a/(a+1)` rather than `a`.
+
+**For N=0**, the Attack Inequality can be simplified to:
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;`a > 1`
+This means that the minimum attack cost is where `a = 1`. From this we can transform the costOfAttack to its minimum cost:
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;`1/2*(HashCost + MinerStakeCost)`
+
+So from this, we can see that even without any PoS minting at all, we can decrease the hashpower necessary to maintain a particular level of security as long as `MinerStakeCost` can make up the rest of the cost-of-attack. For example, if `2*MinerStakeCost` exceeds the target cost-of-attack, `HashCost` can theoretically be made arbitrarily low. In the case of N>0, making `HashCost` does open up the possibility of stake grinding, however at N=0 this obviously doesn't matter.
+
+**For N>0**, things get a lot more complicated. The simplified Attack Inequality turns into:
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;`a*b^N > 1`
+This means that the minimum attack cost is where `a*b^N = 1`. So in the case of a minimum-cost attack:
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;`a = b^-N`
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;`b = a^(-1/N)`
+From this we can transform the costOfAttack to:
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;`a/(1+a)*(HashCost + MinerStakeCost) + a^(-1/N)*StakeCost`
+
+At this point, the method for finding the minimum cost of attack might involve getting the derivative of this, then finding the zeros of that derivative and using that to find the minimum cost of attack. However, the math got far too complicated for me. I'm looking for someone to help me co-author this proposal and do some of this more complex mathematics to find the minimum cost of attacking PoTO with the Economic Mining Monopoly Attack in mind. 
+
 # Analysis
 
 ## Security, Cost of Mining, and Cost of Attack
 
 The premise of PoTO is that the security of proof-of-work can combine with the security of proof-of-stake. Because of the chain-length equation, the proportion of hashrate and stake an attacker must minimally have to successfully perform an attack is inversely related. Having just over 50% of each will always work, but this is almost never the cheapest way to attack. For example at N=1, with 75% of the hashrate (3 times the honest hashrate) an attacker would only need 1/3 of the active stake, and at N=3, an attacker with 75% of the hashrate needs a little over 40% of the active stake.
 
-Note that the possibility for the Economic Hashpower Monopoly Attack mostly makes the following analysis moot, since it is the cheapest way to attack the system as long as the cost found by this method exceeds the maximum amount of hashpower that can profitably mine. 
+**Note that the possibility for the Economic Mining Monopoly Attack mostly makes the following analysis moot, since it significantly reduces the cost of attacking any miner-based system (including PoTO, of course). See the section on analysis of the Hash-Stake Extension for more info.**
 
 The equation for finding the minimal cost of a successful longest-chain (*51%-style*) attack is:  
 
@@ -237,7 +317,7 @@ The formula for calculating the minimum cost of attack is derived in the followi
 
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Attack Inequality: `a*HashCost*(b*StakeCost)^N > HashCost*StakeCost^N`  
 where  
-* *a* is the multiple of honest hashpower the attacker has
+* *a* is the multiple of honest mining power the attacker has
 * *b* is the multiple of honest active stake the attacker has
 
 Also, the cost of a successful attack is the cost of acquiring the hashpower for the attack and the coins used for minting in the attack:
@@ -274,7 +354,7 @@ One way to mitigate this type of attack would be to simply incentivize higher mi
 
 A second way to mitigate this type of attack is for nodes to reject revisions if there is no common block (a complete fresh-chain) or if the highest common block is dated more than X days ago (eg 1 day). However this rule wouldn't help new nodes just entering the network, especially if they're being sybil attacked, and wouldn’t help SPV clients using an compromised SPV server that uses the new chain to show proof that a transaction exists in a valid chain with an appropriate length.
 
-A third way to mitigate this would be hardcoded checkpoints in node and wallet software. This would be some data asserting that a block at a certain height has a certain hash. Since users must already either validate or trust their software, having a checkpoint like this would be simply another thing that should be peer-reviewed. Including this hard-coded checkpoint would completely eliminate the possibility of a long-range attack that split from the true-chain before the checkpoint, even for new entrants and SPV clients using a compromised SPV server.
+A third way to mitigate this would be hardcoded checkpoints in node and wallet software. This would be some data asserting that a block at a certain height has a certain hash. Since users must already either validate or trust their software, having a checkpoint like this would be simply another thing that should be peer-reviewed, and thus doesn't introduce any additional level of trust nor security risk. Including this hard-coded checkpoint would completely eliminate the possibility of a long-range attack that split from the true-chain before the checkpoint, even for new entrants and SPV clients using a compromised SPV server.
 
 ## Maximizing Active Stake
 
@@ -290,9 +370,9 @@ Note that requiring more signatures for each PoS block would *not* increase secu
 
 ## Minter Punishment Collateral Damage
 
-In the process of minting, some unlucky honest minters will mint on a chain they think will remain the longest but actually becomes beat out by another chain. This will mean some honest minters get fined for minting. However, the number of honest minters that have to pay fines should be very low compared to the number of honest minters that mint a block on the longest chain, so as long as the fine is lower than the revenue received from minting a block, the expected revenue from attempting to mint should be greater than 0. Since the fine probably doesn't need to be very big to be effective, the expected revenue from attempting to mint should be approximately the full minter revenue. How big the fine needs to be depends on the likelihood that dishonest minting on a shorter chain ends up in the dihonest minter's favor. So the size of the fine is up for debate.
+In the process of minting, some unlucky honest minters will mint on a chain they think will remain the longest but actually becomes beat out by another chain. This will mean some honest minters get fined for minting. However, the number of honest minters that have to pay fines should be very low compared to the number of honest minters that mint a block on the longest chain, so as long as the fine is lower than the revenue received from minting a block, the expected revenue from attempting to mint should be greater than 0. Since the fine probably doesn't need to be very big to be effective, the expected revenue from attempting to mint should be approximately the full minter revenue. How big the fine needs to be depends on the likelihood that dishonest minting on a shorter chain ends up in the dishonest minter's favor. So the size of the fine is up for debate.
 
-Note that a minter punishment proof isn't valid if the minted block and the current block share the same most-recent PoW block because PoS blocks don't make much of a difference in whether an attacker can succeed in a Hashpower Monopoly Attack unless the attacker has a large fraction of the actively minting coins, and punishing minters that minted on top of another PoS block would double the collateral damage. Some analysis on how much stake an attacker would have to have to successfuly execute a Hashpower Monopoly Attack is needed to verify that this is safe.
+Note that a minter punishment proof isn't valid if the minted block and the current block share the same most-recent PoW block because PoS blocks don't make much of a difference in whether an attacker can succeed in a Mining Monopoly Attack unless the attacker has a large fraction of the actively minting coins, and punishing minters that minted on top of another PoS block would double the collateral damage. Some analysis on how much stake an attacker would have to have to successfuly execute a Mining Monopoly Attack is needed to verify that this is safe.
 
 # Potential Issues
 
@@ -311,6 +391,8 @@ Since only people who have coins can mint PoS blocks, those people would have an
 
 Some have brought up the idea that proof-of-stake makes the rich get richer, so to speak. The idea is that the people who have more money will make more money and this would somehow lead to the largest owners eventually owning all the coins. However, this isn't actually what would happen. Since each actively minting address has a chance of minting exactly proportional to their ownership, this means that your expected ROI for minting (as a percentage) will be the same no matter how much coin you own. This means that if everyone is actively minting, no one will gain or lose anything on average over time, tho those that are actively minting would gain more than those that aren't.
 
+Similar arguments hold for miner-stake in the case that the Hash-Stake Extension is being used.
+
 ### Opportunistic mining halt
 A miner may stop mining if one of their addresses is coming up soon enough in the miner progression to maximize their chances to mint the next PoS block. While this could theoretically happen, the opportunity to do this should be very rare and the only problem it would cause is a 1-block temporary PoW slow down. Also, the incentives don’t promote this behavior, since mining a PoW block would be much more lucrative than minting a PoS block.
 
@@ -320,35 +402,43 @@ A prediction attack would be executed by predicting what minter addresses will c
 
 A note about stake grinding should be made here. While an attacker could stake grind a PoW block in order to give themselves a better chance of coming up early in the minter progression, this would require them to throw away a valid block they could gain a reward from. It would always be more beneficial for an attacker to add their PoW block to the chain as normal, since this doesn't in any way reduce their chances of finding a block where their addresses come up early in the progression. The section on opportunistic miner halting above discusses how a miner *could* give themselves a minting advantage.
 
+To reiterate here about the Hash-Stake Extension, a miner with more hashpower than miner-stake could stake grind, and more analysis is needed to figure out how game theory plays out in such a case.
+
 ### Economic Hidden-chain Attack
 
 A "25% attack" or [economic attack](https://bitcoinmagazine.com/articles/selfish-mining-a-25-attack-against-the-bitcoin-network-1383578440/) is where a selfish mining (and/or minting) strategy can allow a particular entity to gain more than their fair share of blocks and thereby either run honest miners out of the system by reducing their revenue below protitable levels or incentivize miners to join their coalition of selfish mining. Both of these outcomes increase the risk of a single entity or coalition gaining enough hashpower/stake to control the chain and do things like double-spend. [A paper](https://arxiv.org/abs/1311.0243) was written that talked about how Bitcoin is susceptible to this attack no matter how much hashpower the attacker has and suggested a partial-fix that when a miner has two potential chains of equal length to mine on top of, they randomly choose the chain to mine on top of. The paper says this makes it so the attacker requires 25% hashpower and goes on to say that theoretically there is no fix that could make this requirement larger than 33%. PoTO likely has this same problem, tho rather than being 25% it would be half the usual requirement of combined hashpower and stake, in turn halving the cost of an attack - however this is just conjecture until further analysis is done.
 
-### Orphan-based Hashpower Monopoly Attack
+### Orphan-based Mining Monopoly Attack
 
-For hybrid systems that rely on bpth PoW and PoS, like PoA, an attacker with greater than 50% of the hashpower can push out other miners and monopolize the generation of PoW blocks. The attacker would gain more than 50% of the hashpower, then simply refuse to mine (and/or mint in the case of PoTO) on top of any chain that contains new PoW blocks created by another miner and instead selfishly mine (and mint) only on the chain where the last PoW block was their's. Since the blocks would be valid blocks propagated normally through the network, any honest minter would mint blocks on top of the attacker's blocks, giving the attacker's chain just as much PoS as the honest chain. However, it would have more PoW and therefore would be the longest chain. At that point, no other miner would be able to make money and would be forced to exit the network, giving the attacker 100% or almost 100% of the hashpower. The attacker could then use their near complete control of the hashpower to perform other attacks with very little coin ownership.
+For hybrid systems that rely on both PoW and PoS, like PoA, an attacker with greater than 50% of the mining power can push out other miners and monopolize the generation of PoW blocks. The attacker would gain more than 50% of the mining power, then simply refuse to mine (and/or mint in the case of PoTO) on top of any chain that contains new PoW blocks created by another miner and instead selfishly mine (and mint) only on the chain where the last PoW block was their's. Since the blocks would be valid blocks propagated normally through the network, any honest minter would mint blocks on top of the attacker's blocks, giving the attacker's chain just as much PoS as the honest chain. However, it would have more PoW and therefore would be the longest chain. At that point, no other miner would be able to make money and would be forced to exit the network, giving the attacker 100% or almost 100% of the hashpower. The attacker could then use their near complete control of the mining power to perform other attacks with very little coin ownership.
 
 PoTO fixes this problem using minter punishments that incentivize minters to only mine on a chain if they think it will end up being the longest. This incentivizes rational minters to ignore shorter chains they have the opportunity to mint on, and only mint on top of the longest chain they're aware of (to minimize their chance of being punished).
 
-### Economic Hashpower Monopoly Attack
+### Economic Mining Monopoly Attack
 
-Consider a mining environment where mining has near-break-even revenue (or exactly break-even considering opportunity cost) and where there are no altruistic honest miners willing to mine at a loss. In such a situation, any entering hashpower would correspond with an exit of a similar amount of hashpower (theoretically an identical amount of hashpower, given identical hashpower costs). What this means is that an attacker willing to mine 100% of the blocks at a loss can obtain 100% of the (active) hashpower. 
+Consider a mining environment where mining has near-break-even revenue (or exactly break-even considering opportunity cost) and where there are no altruistic honest miners willing to mine at a loss. In such a situation, any entering hashpower would correspond with an exit of a similar amount of hashpower (theoretically an identical amount of hashpower, given identical hashpower costs). What this means is that an attacker willing to mine 100% of the blocks at a loss can obtain 100% of the (active) hashpower.
 
-The attacker with cost-effective hashpower could slowly obtain more and more hashpower while incurring very little loss, since any consistent loss is unsustainable for miners mining as a business and the hashpower would quickly reduce such that active miners would again be profitable). However, the quicker the attacker gains this hashpower, the less loss they would incur. For bitcoin's 2-week difficulty periods, if the attacker obtains all the hashpower in that 2-week period, they would incur no loss at all during that time, and would only incur loss for the amount of time it takes the honest hashpower to stop mining bitcoin (probably to switch to a different cryptocurrency) once the difficulty adjusts.
+The attacker with cost-effective hashpower could slowly obtain more and more hashpower while incurring very little loss, since any consistent loss is unsustainable for miners mining as a business and miners would stop mining until the remaining miners miners would again be profitable. The quicker the attacker gains this hashpower, the less loss they would incur. For bitcoin's 2-week difficulty periods, if the attacker obtains all the hashpower in that 2-week period, they would incur no loss at all during that time, and would only incur loss for the amount of time it takes the honest hashpower to stop mining bitcoin (probably to switch to a different cryptocurrency) once the difficulty adjusts.
 
-Because this attack vector has nothing to do with manipulating the blockchain in dishonest ways, there's no way to prevent anyone from executing this, other than by increasing the cost of obtaining enough hashpower that operating that hashpower exceeds the revenue obtained via mining blocks. This means that any system that relies on the attacker not achieving near-100% of the hashpower is suceptible to this. Bitcoin is of course suceptible to this, but since there are cheaper attacks on bitcoin (ie a 51% attack) its suceptibility doesn't matter. But for protocols with the goal of reducing the amount of hashpower the system needs to be secure, this would likely be the cheapest attack vector. 
+Because this attack vector has nothing to do with manipulating the blockchain in programmatically detectable dishonest ways, there's no way to prevent anyone from executing this, other than by increasing the cost of obtaining enough hashpower such that operating that obtained hashpower exceeds the revenue earned by mining blocks. This means that any system where miners compete with each other only via hashpower and that relies on the attacker not achieving near-100% of the hashpower, is susceptible to this attack.
 
-Even detecting this attack would be difficult as this would look like some miners simply found a more cost-effective way to mine. What you would see is that the honest miners who identify themselves in blocks will stop mining. Once a lot of such miners exit the system, the only way to prevent the attack would be to add more block revenue (coinbase reward and fees).
+Even detecting this attack would be difficult as this would look like some miners simply found a more cost-effective way to mine. What you would see is that the honest miners who identify themselves in their blocks will stop mining. Once a lot of such miners exit the system, the only way to prevent the attack would be to add more block revenue (coinbase reward and fees).
 
-So while PoTO is more secure for a given amount of hashpower than pure-PoW protocols, the cost of an attack is only doubled (from 50% of the profitable hashpower to 100%). And this should actually be the theoretical maximum security of any consensus protocol that has attack vectors if the attacker gains 100% of the hashpower. 
+Bitcoin is also susceptible to this, which means that an actor attacking Bitcoin at equilibrium (which Bitcoin is not at today) would only need to obtain an amount of hashpower equal to half the existing hashpower, rather than having to double the existing hashpower. Of course, Bitcoin is not at equilibrium, and it remains to be seen how long it will take for miner profit margins shrink to the point where the effects of this form of attack would be significant.
+
+So while PoTO is more secure for a given amount of mining power than pure-PoW protocols, the cost of an attack is only, at maximum, doubled (from 50% of the profitable mining power to 100%). And this should actually be the theoretical maximum security of any consensus protocol that has attack vectors if the attacker gains 100% of the hashpower.
+
+While this problem can't be circumvented entirely, you can increase the cost of this attack by increasing requirements for mining a block. One example is giving a miner an advantage depending on how much coin they own. I detailed this in the section on the Hash-Stake Extension.
 
 ### Minter Bribery
 
-Because of the possibility of a Hashpower Monopoly Attack, it is important that honest minters only mint on top of the longest chain. If an attacker can bribe a significant fraction of minters to sign their blocks secretly, those minters could escape the possibility of being punished for dishonest mining while giving an attacker the ability to successfully execute the Hashpower Monopoly Attack. The likelihood of this seems incredibly small tho, since it would require active dishonesty by a large portion of coin holders, all of whom have a huge incentive to keep the system (and thus their money) secure and would risk that security by dishonestly minting, only getting rewarded for it if the attacker succeeded.
+Because of the possibility of a Orphan-based Mining Monopoly Attack, it is important that honest minters only mint on top of the longest chain. If an attacker can bribe a significant fraction of minters to sign their blocks secretly, those minters could escape the possibility of being punished for dishonest mining while giving an attacker the ability to successfully execute the Mining Monopoly Attack. The likelihood of this seems incredibly small tho, since it would require active dishonesty by a large portion of coin holders, all of whom have a huge incentive to keep the system (and thus their money) secure and would risk that security by dishonestly minting, only getting rewarded for it if the attacker succeeded.
 
 # Comparisons
 
 ## Comparison to Pure Proof of Work
+
+**NOTE: Comparisons of cost-of-attack in this section are currently outdated because of the discovery of the Economic Mining Monopoly Attack. Updated analysis of the Hash-Stake Extension is pending.**
 
 #### Short-Range longest-chain Attacks
 
@@ -404,6 +494,9 @@ Please feel free to use the github issues as a forum for questions and discussin
 Version History
 ===============
 
+* 0.4.0
+    * Adding the Hash-Stake Extension
+    * Changing the name of the "Hashpower Monopoly Attack" to the more general name "Mining Monopoly Attack"
 * 0.3.1 - Adding a discussion of the Economic Hashpower Monopoly Attack, which significantly reduces the security of PoTO (and all other similar hybrid protocols) to about twice the security of pure PoW.
 * 0.3.0
 	* Getting rid of the address hash which considered the last PoS block's address hash, and replacing it with the *minter seed* which considers only the last PoW block hash and the current block height to solve the prediction attack problem

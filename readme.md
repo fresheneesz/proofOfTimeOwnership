@@ -1,5 +1,5 @@
 *Version: 1.0.0*  
-*Status: Ready to Peer Review*
+*Status: Abandoned in favor of VPoS*
 
 # Proof of Time-Ownership
 
